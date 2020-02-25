@@ -35,7 +35,7 @@
 	width: 100%;
 }
 
-.bottom-menu-b {
+.menu-b {
 	border: 0;
 	text-align: center;
 	background-color: orange;
@@ -53,8 +53,8 @@
 	<div id="journal-content"></div>
 	<br/>
 	<button id="age-up-b">Age</button><br/>
-	<button class="bottom-menu-b" id="activity-button">Actions</button>
-	<button class="bottom-menu-b" id="relationships-button">Relationships</button>
+	<button class="menu-b" id="activity-button">Actions</button>
+	<button class="menu-b" id="relationships-button">Relationships</button>
 </div>
 <div id="screen1">
 
@@ -117,6 +117,7 @@ class Person{
 		this.is_transsexual = false;
 		this.can_die = true;
 		this.deceased = false;
+		this.is_married = false;
 		this.adopted = randomChoiceFromArr([true, false, false, false]);
 		this.spouse = null;
 		this.so = null; //Signifigant other
@@ -139,6 +140,8 @@ class Person{
 		this.parents[1].children.push(this);
 		this.parents[0].spouse = this.parents[1];
 		this.parents[1].spouse = this.parents[0];
+		this.parents[0].is_married = true;
+		this.parents[1].is_married = true;
 	}
 	
 	getOptsMenu() {
@@ -213,6 +216,7 @@ function hideAllDivs() {
 	activities_screen.style.display = "none";
 	relationships_screen.style.display = "none";
 	sub_screen.style.display = "none";
+	sub_screen.innerHTML = "";
 	event_popup.style.display = "none";
 	main_screen.style.display = "none";
 }
@@ -238,19 +242,62 @@ function startGame(){
 		dr_debug.can_die = false;
 		people[0].friends.push(dr_debug);
 	}
+	genRelationshipsScreen();
 }
 
-function genRelationshipsPage() {
+function menuButton(on_click, txt) {
+	var b = document.createElement("button");
+	b.onclick = on_click;
+	b.class = "menu-b";
+	b.style.width = "100%";
+	b.style.fontSize = "35px";
+	b.style.backgroundColor = "orange";
+	b.innerHTML = txt;
+	return b;
+}
+
+function showPersonScreen(p) {
+	return function() {
+		
+	};
+}
+
+function showSubRelationshipScreen(arr) {
+	return function() {
+		sub_screen.appendChild(menuButton(returnToMainScreen, "Back"));
+		arr.forEach(function(x) {
+			if (DEBUG_MSG) {
+				alert("debug sSRS " + x.name);
+			}
+			sub_screen.appendChild(menuButton(showPersonScreen(x), x.name));
+		});
+		hideAllDivs();
+		sub_screen.style.display = "initial";
+	};
+}
+
+function genRelationshipsScreen() {
+	relationships_screen.appendChild(menuButton(returnToMainScreen, "Back"));
+	relationships_screen.appendChild(menuButton(showSubRelationshipScreen(people[0].parents), "Parents"));
+}
+
+function showRelationshipsScreen() {
 	hideAllDivs();
 	relationships_screen.style.display = "initial";
 }
+
+function handleErrs(msg, url, line) {
+	alert("Error at line " + line + ":" + " " + msg);
+}
+
+window.onerror = handleErrs;
 
 if (DEBUG_MSG) {
 	alert("debug start");
 }
 try{
 	age_button.onclick = ageUpGlobal;
-	relationships_button.onclick = genRelationshipsPage;
+	relationships_button.onclick = showRelationshipsScreen;
 	startGame();
 }
 catch(err) {
