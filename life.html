@@ -264,6 +264,7 @@ function showPersonScreen(p) {
 
 function showSubRelationshipScreen(arr) {
 	return function() {
+		hideAllDivs();
 		sub_screen.appendChild(menuButton(returnToMainScreen, "Back"));
 		arr.forEach(function(x) {
 			if (DEBUG_MSG) {
@@ -271,7 +272,6 @@ function showSubRelationshipScreen(arr) {
 			}
 			sub_screen.appendChild(menuButton(showPersonScreen(x), x.name));
 		});
-		hideAllDivs();
 		sub_screen.style.display = "initial";
 	};
 }
