@@ -1,0 +1,426 @@
+<style>
+
+.header {
+	color:blue;
+	font-size: 26px;
+	border-style: solid;
+	border-color: red:
+	max-height: 35px;
+	height: 35px;
+	max-width: 100%;
+	text-align: center;
+}
+
+#journal-content {
+	color:blue;
+	font-size:16px;
+	height: 70%;
+	max-height:70%;
+	width: 100%;
+	max-width:100%;
+	overflow-y: auto;
+	word-wrap: break-word;
+	border-style: solid;
+	border-color: black;
+}
+
+#age-up-b {
+	border: 0;
+	text-align: center;
+	background-color: #be03fc;
+	color: #fff;
+	text-shadow: 1px 1px 1px #000;
+	box-shadow: inset 2px 2px 3px rgba(255, 255, 255, .6), inset -2px -2px 3px rgba(0, 0, 0, .6);
+	font-size: 50px;
+	padding: 2px;
+	width: 100%;
+}
+
+.menu-b {
+	border: 0;
+	text-align: center;
+	background-color: orange;
+	color: #fff;
+	text-shadow: 1px 1px 1px #000;
+	box-shadow: inset 2px 2px 3px rgba(255, 255, 255, .6), inset -2px -2px 3px rgba(0, 0, 0, .6);
+	font-size: 20px;
+	padding: 2px;
+	width: 49%;
+}
+
+#person-data {
+	text-align: center;
+	font-size: 20px;
+}
+
+p.event {
+	text-align: center;
+	font-size: 20px;
+	color: red;
+}
+</style>
+<div id="name-header" class="header"></div>
+<div id="screen0">
+	<br/>
+	<div id="journal-content"></div>
+	<br/>
+	<button id="age-up-b">Age</button><br/>
+	<button class="menu-b" id="activity-button">Actions</button>
+	<button class="menu-b" id="relationships-button">Relationships</button>
+</div>
+<div id="screen1">
+
+</div>
+<div id="screen2">
+	<div id="relationships-header" class="header">Relationships</div>
+</div>
+<div id="screen3">
+
+</div>
+<div id="screen4">
+
+</div>
+
+<script type="text/javascript">
+const VERSION = "0.0.2";
+const SHOW_DR_DEBUG = true;
+const AGE_FREEZE = false;
+const DEBUG_MSG = true;
+var people = [];
+//var relationships = [];
+var events = [];
+var sexualities = ["heterosexual", "homosexual", "bisexual"];
+var names = {
+	"male": ["Brendon", "Brandon", "Stuart", "Kevin"],
+	"female": ["Brenda", "Carly", "Janette", "Eliza"],
+	"last": ["Stevenson", "Williams", "Haws", "Browne"]
+};
+var genders = ["male", "female"];
+var main_screen = document.getElementById("screen0");
+var activities_screen = document.getElementById("screen1");
+var relationships_screen = document.getElementById("screen2");
+var sub_screen = document.getElementById("screen3");
+var event_screen = document.getElementById("screen4");
+var name_header = document.getElementById("name-header");
+var journal = document.getElementById("journal-content");
+var age_button = document.getElementById("age-up-b");
+var activity_button = document.getElementById("activity-button");
+var relationships_button = document.getElementById("relationships-button");
+var dr_debug;
+
+function range(num1, num2) {
+	var arr = [];
+	for(var i=num1;i<=num2;i++) {
+		arr.push(i);
+	}
+	return arr;
+}
+
+function randomChoiceFromArr(arr) {
+	var num = Math.random();
+	num = num * arr.length;
+	num = Math.floor(num);
+	return arr[num];
+}
+
+/*
+class RelationshipObject {
+	constructor (p1, p2, reltype) {
+		this.p1 = p1;
+		this.p2 = p2;
+		this.type = reltype;
+	}
+}
+
+function createRel(p1, p2, type) {
+	var rel = new RelationshipObject(p1, p2, type);
+	relationships.push(rel);
+}
+*/
+
+class Person{
+	constructor(name, gender, age){
+		this.nfirst = name.split(" ")[0];
+		this.nlast = name.split(" ")[1];
+		this.name = name;
+		this.gender = gender;
+		this.age = age;
+		this.sexuality = randomChoiceFromArr(sexualities);
+		this.is_transsexual = false;
+		this.can_die = true;
+		this.deceased = false;
+		this.is_married = false;
+		this.adopted = randomChoiceFromArr([true, false, false, false]);
+		this.spouse = null;
+		this.so = null; //Signifigant other
+		this.friends = [];
+		this.children = [];
+		this.flings = [];
+		this.exes = [];
+		this.siblings = [];
+		this.parents = [];
+		this.cousins = [];
+		this.occupation = null;
+		this.pl_relationship = 50;
+	}
+	
+	generateParentsAtRandom() {
+		var gender1 = randomChoiceFromArr(genders);
+		var gender2 = randomChoiceFromArr(genders);
+		this.parents.push(new Person(randomChoiceFromArr(names[gender1]) + " " + this.nlast, gender1, this.age + 20));
+		this.parents.push(new Person(randomChoiceFromArr(names[gender2]) + " " + this.nlast, gender2, this.age + 20));
+		this.parents[0].children.push(this);
+		this.parents[1].children.push(this);
+		this.parents[0].spouse = this.parents[1];
+		this.parents[1].spouse = this.parents[0];
+		this.parents[0].is_married = true;
+		this.parents[1].is_married = true;	
+	}
+	
+	getOptsMenu(p) {
+		return function () {
+			var info = document.createElement("p");
+			hideAllDivs();
+			sub_screen.style.display = "initial";
+			if (DEBUG_MSG) {
+				alert(`debug gOM ${p.name}`);
+			}
+			sub_screen.appendChild(menuButton(returnToMainScreen, "Back"));
+			info.id = "person-data";
+			info.innerHTML = `Name: ${p.name}<br/> Age: ${p.age}<br/> Gender: ${p.gender}<br/> Sexuality: ${p.sexuality}`;
+			sub_screen.appendChild(info);
+		}
+	}
+	
+	ageUp() {
+		this.age++;
+		this.pl_relationship--;
+	}
+}
+
+class Player extends Person {
+	constructor(){
+		var gender = randomChoiceFromArr(genders);
+		super(randomChoiceFromArr(names[gender]) + " " + randomChoiceFromArr(names["last"]), gender, 0);
+		
+	}
+	
+	ageUp() {
+		var jtext = "<br/><br/><b>Age " + this.age + "</b><br/>";
+		if(this.age == 0) {
+			jtext = jtext.concat("<p>My name is " + this.name + ". My parents are " + this.parents[0].name + " and " + this.parents[1].name + ".");
+		}
+		
+		if (!AGE_FREEZE) {
+			this.age++;
+		}
+		journal.innerHTML = journal.innerHTML.concat(jtext);
+		journal.scrollTop = journal.scrollHeight;
+		this.pl_relationship = 100;
+	}
+}
+
+function writeToJournal(txt) {
+	journal.innerHTML = `${journal.innerHTML}<br/>${txt}`;
+}
+
+class EventOption {
+	constructor(txt, func) {
+		this.txt = txt;
+		this._evt_func = func;
+		this.func = function(){
+			func();
+			returnToMainScreen();
+		}
+	}
+}
+
+class Event {
+	constructor (id, title, info, options, conditional=false, age_range=range(0, 200)){
+		this.id = id;
+		this.title = title;
+		this.info = info;
+		this.options = options;
+		this.conditional = conditional;
+		this.age_range = age_range;
+	}
+}
+
+class Activity {
+	constructor(txt, evt) {
+		this.txt = txt;
+		this.evt = evt;
+	}
+	
+	genButton() {
+		var txt = this.txt;
+		var evt = this.evt;
+		activities_screen.appendChild(menuButton(function(){
+			callPlEvent(evt, true);
+		}), txt);
+}
+
+class ActivitySubScreen {
+	constructor(txt, activities) {
+		this.txt = txt;
+		this.activities = activities;
+	}
+	genButton() {
+		activities_screen.appendChild(menuButton(function(){
+			
+		}, this.txt));
+	}
+}
+
+function createEvent(title, info, options, conditional=false, age_range=range(0,200)) {
+	var evt = new Event(events.length, title, info, options);
+	events.push(evt);
+}
+
+createEvent("WOOP DE DO!", "blah blah FART hahahah!", 
+[new EventOption("thats so funny HAHAHAH", function(){
+	writeToJournal("HAHAHAHAHAAH");
+}),
+new EventOption("ghdbchucvgudjevdihvudejbdi", function(){
+	writeToJournal("what");
+})]);
+
+function ageUpGlobal(){
+	try{
+		people.forEach(function(x){
+			x.ageUp();
+		});
+	}
+	catch(err){
+		alert("Error: " + err);
+	}
+}
+
+function hideAllDivs() {
+	activities_screen.style.display = "none";
+	relationships_screen.style.display = "none";
+	sub_screen.style.display = "none";
+	sub_screen.innerHTML = "";
+	event_screen.style.display = "none";
+	main_screen.style.display = "none";
+}
+
+function returnToMainScreen() {
+	hideAllDivs();
+	main_screen.style.display = "initial";
+}
+
+function showEventScreen() {
+	hideAllDivs();
+	event_screen.style.display = "initial";
+}
+
+function callPlEvent(evt, with_c=false) {
+	if((with_c==evt.conditional)||(evt.conditional==false)) {
+		var evt_h = document.createElement("div");
+		var evt_p = document.createElement("p");
+		evt_h.className = "header";
+		evt_p.className = "event";
+		event_screen.innerHTML = "";
+		evt_h.innerHTML = evt.title;
+		evt_p.innerHTML = evt.info;
+		event_screen.appendChild(evt_h);
+		event_screen.appendChild(evt_p);
+		evt.options.forEach(function(opt){
+		event_screen.appendChild(menuButton(opt.func, opt.txt));
+		});
+		showEventScreen();
+	}
+}
+
+function startGame(){
+	hideAllDivs();
+	main_screen.style.display = "initial";
+	people[0] = new Player();
+	name_header.innerHTML = people[0].name;
+	if(DEBUG_MSG){
+		alert("debug name pl " + people[0].name);
+	}
+	people[0].generateParentsAtRandom();
+	people[0].ageUp();
+	
+	if(SHOW_DR_DEBUG) {
+		dr_debug = new Person("Dr. Debug", "male", 0);
+		dr_debug.getOptsMenu = showDebugScreen;
+		dr_debug.can_die = false;
+		people[0].friends.push(dr_debug);
+	}
+	genRelationshipsScreen();
+}
+
+function menuButton(on_click, txt) {
+	var b = document.createElement("button");
+	b.onclick = on_click;
+	b.class = "menu-b";
+	b.style.width = "100%";
+	b.style.fontSize = "35px";
+	b.style.backgroundColor = "orange";
+	b.innerHTML = txt;
+	return b;
+}
+
+function showSubRelationshipScreen(arr) {
+	return function() {
+		hideAllDivs();
+		sub_screen.appendChild(menuButton(returnToMainScreen, "Back"));
+		arr.forEach(function(x) {
+			if (DEBUG_MSG) {
+				alert("debug sSRS " + x.name);
+			}
+			sub_screen.appendChild(menuButton(x.getOptsMenu(x), x.name));
+		});
+		sub_screen.style.display = "initial";
+	};
+}
+
+function genRelationshipsScreen() {
+	relationships_screen.appendChild(menuButton(returnToMainScreen, "Back"));
+	relationships_screen.appendChild(menuButton(showSubRelationshipScreen(people[0].parents), "Parents"));
+	relationships_screen.appendChild(menuButton(showSubRelationshipScreen(people[0].friends), "Friends"));
+	relationships_screen.appendChild(menuButton(showSubRelationshipScreen(people[0].siblings), "Siblings"));
+}
+
+function showRelationshipsScreen() {
+	hideAllDivs();
+	relationships_screen.style.display = "initial";
+}
+
+function showDebugScreen(p) {
+	hideAllDivs();
+	sub_screen.style.display = "initial";
+	sub_screen.appendChild(menuButton(returnToMainScreen, "Back"));
+	sub_screen.appendChild(menuButton(function() {
+		hideAllDivs();
+		var tarea = document.createElement("textarea");
+		tarea.id = "tarea";
+		sub_screen.style.display = "initial";
+		sub_screen.appendChild(tarea);
+		sub_screen.appendChild(menuButton(function() {
+			callPlEvent(events[parseInt(tarea.value)]);
+		}, "Call"));
+	}, "Call event"));
+}
+
+function handleErrs(msg, url, line) {
+	alert("Error at line " + line + ":" + " " + msg);
+}
+
+window.onerror = handleErrs;
+
+if (DEBUG_MSG) {
+	alert("debug start");
+}
+try{
+	age_button.onclick = ageUpGlobal;
+	relationships_button.onclick = showRelationshipsScreen;
+	startGame();
+}
+catch(err) {
+	alert("Error: " + err);
+}
+</script>
